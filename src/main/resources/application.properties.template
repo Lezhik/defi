@@ -1,2 +1,10 @@
 node=crypto node url
 limit=10
+
+spring.jpa.hibernate.ddl-auto=create
+
+spring.datasource.url=jdbc:h2:file:./db/lake
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=sa
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect

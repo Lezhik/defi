@@ -1,7 +1,9 @@
 package defi;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import defi.model.DefiTransaction;
+import defi.service.DefiTransactionService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -11,15 +13,20 @@ import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.http.HttpService;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @SpringBootApplication
 public class Application implements CommandLineRunner {
-    private static final Logger logger = LoggerFactory.getLogger(Application.class);
-
     @Value("${node}")
-    private String node;
+    String node;
     @Value("${limit}")
-    private int limit;
+    int limit;
+
+    @Autowired
+    DefiTransactionService service;
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(Application.class, args);
@@ -27,29 +34,52 @@ public class Application implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        logger.debug("Connect");
-        Web3j w3j = Web3j.build(new HttpService(node));
-        logger.debug("Request block number");
-        var num = w3j.ethBlockNumber().send().getBlockNumber();
-        logger.info("Number: {}", num.toString());
-        logger.debug("Request transactions count");
-        var param = DefaultBlockParameter.valueOf(num);
-        var total = w3j.ethGetBlockTransactionCountByNumber(param).send()
-                .getTransactionCount();
-        logger.info("Transactions count: {}", total);
-        int count = total.compareTo(BigInteger.valueOf(limit)) < 0 ? total.intValue() : limit;
-        for (int i = 0; i < count; i++) {
-            logger.debug("Get transaction {} of {}", i + 1, count);
-            var t = w3j.ethGetTransactionByBlockNumberAndIndex(param, BigInteger.valueOf(i))
-                    .send().getTransaction();
-            if (t.isPresent()) {
-                logger.info("{} -> {}", t.get().getFrom(), t.get().getTo());
-            } else {
-                logger.debug("Empty");
+        Web3j w3j = null;
+        try {
+            log.debug("Connect");
+            w3j = Web3j.build(new HttpService(node));
+            log.debug("Request block number");
+            var num = w3j.ethBlockNumber().send().getBlockNumber();
+            log.info("Number: {}", num.toString());
+            log.debug("Request transactions count");
+            var param = DefaultBlockParameter.valueOf(num);
+            var total = w3j.ethGetBlockTransactionCountByNumber(param).send()
+                    .getTransactionCount();
+            log.info("Transactions count: {}", total);
+            int count = total.compareTo(BigInteger.valueOf(limit)) < 0 ? total.intValue() : limit;
+            List<DefiTransaction> received = new ArrayList<DefiTransaction>(count);
+            for (int i = 0; i < count; i++) {
+                log.debug("Get transaction {} of {}", i + 1, count);
+                var t = w3j.ethGetTransactionByBlockNumberAndIndex(param, BigInteger.valueOf(i))
+                        .send().getTransaction();
+                if (t.isPresent()) {
+                    log.info("{} -> {}", t.get().getFrom(), t.get().getTo());
+                    received.add(new DefiTransaction(t.get()));
+                } else {
+                    log.debug("Empty");
+                }
+            }
+            log.debug("Save to db");
+            if (received.size() > 0) {
+                var hashes = received.stream()
+                        .map(t -> t.getHash())
+                        .collect(Collectors.toList());
+                var existingHashes = service.getExistingHashes(hashes);
+                var newTransactions = received.stream()
+                        .filter(t -> !existingHashes.contains(t.getHash()))
+                        .collect(Collectors.toList());
+                if (newTransactions.size() > 0) {
+                    service.save(received);
+                }
+            }
+        } catch (Throwable t) {
+            log.error("Error", t);
+        } finally {
+            if (w3j != null) {
+                log.debug("Shutdown");
+                w3j.shutdown();
             }
         }
-        logger.debug("Shutdown");
-        w3j.shutdown();
-        logger.debug("Complete");
+        log.debug("Complete");
     }
 }
