@@ -23,6 +23,7 @@ public class DefiTransaction {
     @Column(columnDefinition = "uuid")
     UUID id;
 
+    @Column(unique=true)
     String hash;
     String blockHash;
     String fromWallet;
@@ -46,31 +47,11 @@ public class DefiTransaction {
 
     public DefiTransaction(Transaction t) {
         id = UUID.randomUUID();
-        if (t.getHash() != null && t.getHash().startsWith("0x")) {
-            hash = t.getHash().substring(2);
-        } else {
-            hash = t.getHash();
-        }
-        if (t.getBlockHash() != null && t.getBlockHash().startsWith("0x")) {
-            blockHash = t.getBlockHash().substring(2);
-        } else {
-            blockHash = t.getBlockHash();
-        }
-        if (t.getFrom() != null && t.getFrom().startsWith("0x")) {
-            fromWallet = t.getFrom().substring(2);
-        } else {
-            fromWallet = t.getFrom();
-        }
-        if (t.getTo() != null && t.getTo().startsWith("0x")) {
-            toWallet = t.getTo().substring(2);
-        } else {
-            toWallet = t.getTo();
-        }
-        if (t.getInput() != null && t.getInput().startsWith("0x")) {
-            input = t.getInput().substring(2);
-        } else {
-            input = t.getInput();
-        }
+        hash = t.getHash();
+        blockHash = t.getBlockHash();
+        fromWallet = t.getFrom();
+        toWallet = t.getTo();
+        input = t.getInput();
         creates = t.getCreates();
         publicKey = t.getPublicKey();
 
