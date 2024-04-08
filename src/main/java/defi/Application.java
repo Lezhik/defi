@@ -10,10 +10,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.http.HttpService;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,28 +41,34 @@ public class Application implements CommandLineRunner {
         try {
             log.debug("Connect");
             w3j = Web3j.build(new HttpService(node));
-            log.debug("Request block number");
-            var num = w3j.ethBlockNumber().send().getBlockNumber();
-            log.info("Number: {}", num.toString());
-            log.debug("Request transactions count");
+            //log.debug("Request block number");
+            var num = BigInteger.valueOf(37687395L); // w3j.ethBlockNumber().send().getBlockNumber();
+            log.info("Bloc number: {}", num);
+            log.debug("Request block data");
             var param = DefaultBlockParameter.valueOf(num);
-            var total = w3j.ethGetBlockTransactionCountByNumber(param).send()
-                    .getTransactionCount();
-            log.info("Transactions count: {}", total);
-            int count = total.compareTo(BigInteger.valueOf(limit)) < 0 ? total.intValue() : limit;
-            List<DefiTransaction> received = new ArrayList<DefiTransaction>(count);
-            for (int i = 0; i < count; i++) {
-                log.debug("Get transaction {} of {}", i + 1, count);
-                var t = w3j.ethGetTransactionByBlockNumberAndIndex(param, BigInteger.valueOf(i))
-                        .send().getTransaction();
-                if (t.isPresent()) {
-                    log.info("{} -> {}", t.get().getFrom(), t.get().getTo());
-                    received.add(new DefiTransaction(t.get()));
-                } else {
-                    log.debug("Empty");
+            var block = w3j.ethGetBlockByNumber(param, true).send().getBlock();
+            log.info("Block: {}, transactions count: {}", block.getHash(), block.getTransactions().size());
+            var received = new ArrayList<DefiTransaction>(block.getTransactions().size());
+            var index = 0;
+            for (var txLink: block.getTransactions()) {
+                index++;
+                if (limit > 0 && index > limit) {
+                    log.warn("Limit exceeded, stop transaction loading for this block");
+                }
+                if (!(txLink instanceof Transaction)) {
+                    log.warn("Block transaction is not and instance of Transaction.class, actual class is {}", txLink.getClass());
+                    continue;
+                }
+                var tx = (Transaction) txLink;
+                if ("0x06fd6049f45351115ee243de215b5105348c19365192b796cc0c665136540cfe".equals(tx.getHash())) {
+                    var receipt = w3j.ethGetTransactionReceipt(tx.getHash()).send().getTransactionReceipt().get();
+                    var dto = new DefiTransaction(block, tx, receipt);
+                    log.info("{}", dto);
+                    log.info("Value: {}", String.format("%.10f", dto.getTransactionValue()));
+                    log.info("Fee: {}", String.format("%.10f", dto.getTransactionFee()));
                 }
             }
-            log.debug("Save to db");
+            /*log.debug("Save to db");
             if (received.size() > 0) {
                 var hashes = received.stream()
                         .map(t -> t.getHash())
@@ -68,10 +77,10 @@ public class Application implements CommandLineRunner {
                 var newTransactions = received.stream()
                         .filter(t -> !existingHashes.contains(t.getHash()))
                         .collect(Collectors.toList());
-                if (newTransactions.size() > 0) {
+                if (!newTransactions.isEmpty()) {
                     service.save(received);
                 }
-            }
+            }*/
         } catch (Throwable t) {
             log.error("Error", t);
         } finally {

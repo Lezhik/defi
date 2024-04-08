@@ -1,7 +1,9 @@
 package defi.model;
 
 import lombok.Data;
+import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.Transaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import javax.persistence.*;
 import java.math.BigInteger;
@@ -23,45 +25,36 @@ public class DefiTransaction {
     @Column(columnDefinition = "uuid")
     UUID id;
 
+    String blockHash;
+    long blockNumber;
+    long blockDate;
+
     @Column(unique=true)
     String hash;
-    String blockHash;
     String fromWallet;
     String toWallet;
-    @Column(columnDefinition = "text")
-    String input;
-    String creates;
-    String publicKey;
 
-    BigInteger nonce;
-    BigInteger blockNumber;
-    BigInteger transactionIndex;
-    @Column(columnDefinition = "NUMERIC(20, 0)")
-    BigInteger transactionValue;
-    BigInteger gasPrice;
-    BigInteger gas;
+    double transactionValue;
+    double transactionFee;
 
-    Date logged;
+    long logged;
 
     public DefiTransaction() {}
 
-    public DefiTransaction(Transaction t) {
+    public DefiTransaction(EthBlock.Block block, Transaction transaction, TransactionReceipt receipt) {
         id = UUID.randomUUID();
-        hash = t.getHash();
-        blockHash = t.getBlockHash();
-        fromWallet = t.getFrom();
-        toWallet = t.getTo();
-        input = t.getInput();
-        creates = t.getCreates();
-        publicKey = t.getPublicKey();
 
-        nonce = t.getNonce();
-        blockNumber = t.getBlockNumber();
-        transactionIndex = t.getTransactionIndex();
-        transactionValue = t.getValue();
-        gasPrice = t.getGasPrice();
-        gas = t.getGas();
+        blockHash = block.getHash();
+        blockNumber = block.getNumber().longValue();
+        blockDate = block.getTimestamp().longValue();
 
-        logged = new Date();
+        hash = transaction.getHash();
+        fromWallet = transaction.getFrom();
+        toWallet = transaction.getTo();
+
+        transactionValue = transaction.getValue().doubleValue() / transaction.getGasPrice().doubleValue() / 1.0E9;
+        transactionFee = receipt.getGasUsed().doubleValue() / transaction.getGasPrice().doubleValue();
+
+        logged = System.currentTimeMillis();
     }
 }
