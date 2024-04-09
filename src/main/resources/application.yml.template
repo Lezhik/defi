@@ -1,0 +1,7 @@
+# Etherium (https://chainlist.org/chain/1)
+nodes: >
+  https://endpoints.omniatech.io/v1/eth/mainnet/public,
+  https://rpc.mevblocker.io/fast,
+
+testBlock: 19619595
+jsonPath: db

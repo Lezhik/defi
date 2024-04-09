@@ -1,5 +1,5 @@
 Blockchain data visualisation project.
 
 To run
-* Copy src/main/resources/application.properties.template to src/main/resources/application.properties
-* Fill blockchain node url and database connection 
+* Copy src/main/resources/application.yml.template to src/main/resources/application.yml
+* Fill blockchain node urls and path to save data 

@@ -1,0 +1,24 @@
+# Binance
+#nodes:
+# https://bsc-dataseed.binance.org/
+
+# Etherium (https://chainlist.org/chain/1)
+nodes: >
+  https://endpoints.omniatech.io/v1/eth/mainnet/public,
+  https://rpc.mevblocker.io/fast,
+  https://eth-pokt.nodies.app,
+  https://rpc.mevblocker.io,
+  https://ethereum-rpc.publicnode.com,
+  https://ethereum.blockpi.network/v1/rpc/public,
+  https://public.stackup.sh/api/v1/node/ethereum-mainnet,
+  https://eth.rpc.blxrbdn.com,
+  https://eth-mainnet.public.blastapi.io,
+  https://eth.drpc.org,
+  https://api.zmok.io/mainnet/oaen6dy8ff6hju9k,
+  https://singapore.rpc.blxrbdn.com,
+  https://virginia.rpc.blxrbdn.com,
+  https://eth-mainnet.public.blastapi.io,
+  https://rpc.ankr.com/eth
+
+testBlock: 19619595
+jsonPath: db
