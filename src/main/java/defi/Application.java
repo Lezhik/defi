@@ -1,22 +1,25 @@
 package defi;
 
-import defi.model.DefiTransaction;
-import defi.service.EthClientService;
-import defi.service.IOService;
+import defi.crawler.CrawlerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+
 import java.util.Date;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @SpringBootApplication
 public class Application implements CommandLineRunner {
     @Autowired
-    EthClientService client;
-    @Autowired
-    IOService io;
+    ApplicationContext context;
+
+    @Value("${crawler.threads}")
+    int threadsCount;
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(Application.class, args);
@@ -26,41 +29,14 @@ public class Application implements CommandLineRunner {
     public void run(String... args) throws Exception {
         var toNum = 19618000L;
         var count = 300000;
-        try {
-            var started = System.currentTimeMillis();
-            var index = 0;
-            log.info("Started on {}", new Date());
-            var num = toNum;
-            var valid = true;
-            while (index <= count) {
-                valid = true;
-                try {
-                    if (index % 1000 == 0) log.info("{} of {}", index, count);
-                    if (!io.exists(num)) {
-                        var block = client.getBlock(num, true);
-                        if (index % 1000 == 0) log.info("Block {} from {}",
-                                block.getNumber().longValue(), new Date(block.getTimestamp().longValue() * 1000));
-                        io.save(block);
-                    }
-                } catch (Throwable t) {
-                    log.error("Error on getting block {}", num);
-                    t.printStackTrace();
-                    valid = false;
-                }
-                if (valid) {
-                    index++;
-                    num--;
-                } else {
-                    Thread.sleep(10000L);
-                }
-            }
-            log.info("Finished on {}", new Date());
-            var finished = System.currentTimeMillis();
-            var delta = (finished - started) / 1000;
-            log.info("Seconds spent: {}", delta);
-        } catch (Throwable t) {
-            log.error("Error", t);
-        }
-        log.debug("Complete");
+        var started = System.currentTimeMillis();
+        log.info("Started on {}, threads {}", new Date(), threadsCount);
+        Executors.newFixedThreadPool(threadsCount).invokeAll(
+            CrawlerFactory.create(toNum, count, context)
+        ).wait();
+        log.info("Finished on {}", new Date());
+        var finished = System.currentTimeMillis();
+        var delta = (finished - started) / 1000;
+        log.info("Seconds spent: {}", delta);
     }
 }

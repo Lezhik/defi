@@ -4,21 +4,32 @@
 
 # Etherium (https://chainlist.org/chain/1)
 nodes: >
+  https://1rpc.io/eth,
+  https://api.securerpc.com/v1,
+  https://api.tatum.io/v3/blockchain/node/ethereum-mainnet,
+  https://api.zmok.io/mainnet/oaen6dy8ff6hju9k,
+  https://api.zan.top/node/v1/eth/mainnet/public,
+  https://cloudflare-eth.com,
+  https://core.gashawk.io/rpc,
   https://endpoints.omniatech.io/v1/eth/mainnet/public,
-  https://rpc.mevblocker.io/fast,
-  https://eth-pokt.nodies.app,
-  https://rpc.mevblocker.io,
-  https://ethereum-rpc.publicnode.com,
   https://ethereum.blockpi.network/v1/rpc/public,
-  https://public.stackup.sh/api/v1/node/ethereum-mainnet,
+  https://ethereum-rpc.publicnode.com,
+  https://eth.drpc.org,
+  https://eth.meowrpc.com,
+  https://eth.nodeconnect.org,
   https://eth.rpc.blxrbdn.com,
   https://eth-mainnet.public.blastapi.io,
-  https://eth.drpc.org,
-  https://api.zmok.io/mainnet/oaen6dy8ff6hju9k,
+  https://eth-pokt.nodies.app,
+  https://mainnet.gateway.tenderly.co,
+  https://public.stackup.sh/api/v1/node/ethereum-mainnet,
+  https://rpc.ankr.com/eth,
+  https://rpc.eth.gateway.fm,
+  https://rpc.mevblocker.io,
   https://singapore.rpc.blxrbdn.com,
   https://virginia.rpc.blxrbdn.com,
-  https://eth-mainnet.public.blastapi.io,
-  https://rpc.ankr.com/eth
+  https://uk.rpc.blxrbdn.com
 
+crawler:
+  threads: 6
 testBlock: 19619595
 jsonPath: db

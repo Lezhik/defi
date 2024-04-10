@@ -3,7 +3,6 @@ package defi.model;
 import lombok.Getter;
 import lombok.Setter;
 import org.web3j.protocol.core.methods.response.Transaction;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigInteger;
 
@@ -23,7 +22,7 @@ public class DefiTransaction {
 
     public DefiTransaction() {}
 
-    public DefiTransaction(Transaction tx, TransactionReceipt receipt) {
+    public DefiTransaction(Transaction tx) {
         hash = tx.getHash();
         fromWallet = tx.getFrom();
         toWallet = tx.getTo();

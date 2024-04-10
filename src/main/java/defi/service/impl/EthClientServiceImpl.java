@@ -9,9 +9,7 @@ import org.springframework.stereotype.Service;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.Transaction;
-import org.web3j.protocol.http.HttpService;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -22,31 +20,15 @@ import java.util.List;
 @Service
 @Slf4j
 public class EthClientServiceImpl implements EthClientService {
-    @Value("${nodes}")
-    String[] nodes;
-    @Value("${testBlock}")
-    long testBlock;
-    List<Web3j> clients;
-    Iterator<Web3j> clientCursor;
+    final List<EthSmartClient> clients;
+    Iterator<EthSmartClient> clientCursor;
 
-    @PostConstruct
-    public void init() {
+    public EthClientServiceImpl(@Value("${nodes}") String[] nodes, @Value("${testBlock}") long testBlock) {
         clients = new ArrayList<>(nodes.length);
         for (var node: nodes) {
-            try {
-                log.info("Connect to {}", node);
-                var client = Web3j.build(new HttpService(node));
-                log.info("Try to get test block {} from node {}", testBlock, node);
-                var param = DefaultBlockParameter.valueOf(BigInteger.valueOf(testBlock));
-                var block = client.ethGetBlockByNumber(param, false).send().getBlock();
-                if (block != null && block.getNumber().longValue() == testBlock) {
-                    clients.add(client);
-                    log.info("Connected to node {}", node);
-                } else {
-                    log.info("Invalid node {}", node);
-                }
-            } catch (Throwable t) {
-                log.info("Invalid node {}", node);
+            var client = new EthSmartClient(node);
+            if (client.init() && client.pingNode(testBlock)) {
+                clients.add(client);
             }
         }
         if (clients.isEmpty()) throw new RuntimeException("No connected nodes!");
@@ -55,41 +37,46 @@ public class EthClientServiceImpl implements EthClientService {
 
     @PreDestroy
     private void shutdown() {
-        for (var client: clients) {
-            try {
-                client.shutdown();
-            } catch (Throwable t) {
-                log.info("Error on disconnecting from node", t);
-            }
-        }
+        clients.forEach(c -> c.shutdown());
         clients.clear();
         clientCursor = null;
     }
 
-    synchronized Web3j getClient() {
-        if (!clientCursor.hasNext()) clientCursor = clients.iterator();
-        var client = clientCursor.next();
+    synchronized EthSmartClient getClient() {
+        EthSmartClient client = null;
+        do {
+            if (client != null) {
+                client.increasePriority();
+            }
+            if (!clientCursor.hasNext()) clientCursor = clients.iterator();
+            client = clientCursor.next();
+        } while (!client.isActive());
         return client;
     }
 
     @Override
     public DefiBlock getBlock(long number, boolean withTransactions) throws IOException {
-        var param = DefaultBlockParameter.valueOf(BigInteger.valueOf(number));
-        var block = getClient().ethGetBlockByNumber(param, withTransactions).send().getBlock();
-        var dto = new DefiBlock(block);
-        if (withTransactions) {
-            var transactions = new ArrayList<DefiTransaction>(block.getTransactions().size());
-            for (var txLink: block.getTransactions()) {
-                if (!(txLink instanceof Transaction)) {
-                    log.warn("Invalid transaction type: {}", txLink.getClass());
-                    continue;
+        EthSmartClient client = null;
+        try {
+            var param = DefaultBlockParameter.valueOf(BigInteger.valueOf(number));
+            client = getClient();
+            var block = client.getClient().ethGetBlockByNumber(param, withTransactions).send().getBlock();
+            var dto = new DefiBlock(block);
+            if (withTransactions) {
+                var transactions = new ArrayList<DefiTransaction>(block.getTransactions().size());
+                for (var txLink: block.getTransactions()) {
+                    if (txLink instanceof Transaction tx) {
+                        transactions.add(new DefiTransaction(tx));
+                    } else {
+                        log.warn("Invalid transaction type: {}", txLink.getClass());
+                    }
                 }
-                var tx = (Transaction) txLink;
-                //var receipt = getClient().ethGetTransactionReceipt(tx.getHash()).send().getTransactionReceipt().get();
-                transactions.add(new DefiTransaction(tx, null)); //receipt));
+                dto.setTransactions(transactions);
             }
-            dto.setTransactions(transactions);
+            return dto;
+        } catch (Throwable t) {
+            if (client != null) client.decreasePriority();
+            throw new IOException(t);
         }
-        return dto;
     }
 }
