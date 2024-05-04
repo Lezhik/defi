@@ -32,6 +32,14 @@ public class Application implements CommandLineRunner {
                 log.info("Transaction submitted: {}", hash);
                 var tx = clientService.getTransactionByHash(hash);
                 log.info("Transaction {} from {} to {}", tx.getHash(), tx.getFrom(), tx.getTo());
+                // use strings because of wrong decoding on some transactions
+                var gas = tx.getGasRaw();
+                var gasPrice = tx.getGasPriceRaw();
+                var maxFee = tx.getMaxFeePerGasRaw();
+                var maxPriorityFee = tx.getMaxPriorityFeePerGasRaw();
+                log.info("Transaction {} gas={}, gas price={}, max fee={}, max priority fee={}", tx.getHash(),
+                        gas, gasPrice, maxFee, maxPriorityFee);
+                log.info("Transaction {} input: {}", tx.getHash(), tx.getInput());
             } catch (Throwable t) {
                 log.error("Error on receiving data", t);
             }
