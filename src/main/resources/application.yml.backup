@@ -1,7 +1,8 @@
+# Binance
+#nodes:
+# https://bsc-dataseed.binance.org/
+
 # Etherium (https://chainlist.org/chain/1)
-wssNodes: >
-  wss://mainnet.gateway.tenderly.co,
-  wss://ethereum-rpc.publicnode.com
 nodes: >
   https://1rpc.io/eth,
   https://api.securerpc.com/v1,
@@ -12,12 +13,14 @@ nodes: >
   https://core.gashawk.io/rpc,
   https://endpoints.omniatech.io/v1/eth/mainnet/public,
   https://ethereum.blockpi.network/v1/rpc/public,
+  https://ethereum-rpc.publicnode.com,
   https://eth.drpc.org,
   https://eth.meowrpc.com,
   https://eth.nodeconnect.org,
   https://eth.rpc.blxrbdn.com,
   https://eth-mainnet.public.blastapi.io,
   https://eth-pokt.nodies.app,
+  https://mainnet.gateway.tenderly.co,
   https://public.stackup.sh/api/v1/node/ethereum-mainnet,
   https://rpc.ankr.com/eth,
   https://rpc.eth.gateway.fm,
@@ -26,9 +29,7 @@ nodes: >
   https://virginia.rpc.blxrbdn.com,
   https://uk.rpc.blxrbdn.com
 
-
 crawler:
   threads: 6
-  retries: 10
 testBlock: 19619595
 jsonPath: db

@@ -1,11 +1,10 @@
 package defi.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import defi.model.DefiBlock;
-import defi.model.DefiTransaction;
 import defi.service.IOService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.web3j.protocol.core.methods.response.EthBlock;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +34,7 @@ public class IOServiceImpl implements IOService {
     }
 
     @Override
-    public void save(DefiBlock block) throws IOException {
+    public void save(EthBlock.Block block) throws IOException {
         var mapper = new ObjectMapper();;
         var writer = mapper.writer();
         var path = createPath(block.getNumber().longValue());

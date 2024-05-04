@@ -1,10 +1,10 @@
 package defi.service;
 
-import defi.model.DefiBlock;
+import org.web3j.protocol.core.methods.response.EthBlock;
 
 import java.io.IOException;
 
 public interface IOService {
     boolean exists(long blockNum);
-    void save(DefiBlock block) throws IOException;
+    void save(EthBlock.Block block) throws IOException;
 }

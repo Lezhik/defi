@@ -18,16 +18,16 @@ public class BlockImporter implements Callable<Boolean> {
 
     @Override
     public Boolean call() throws Exception {
-        if (index % 1000 == 0) log.info("Processing index {}", index);
+        //if (index % 1000 == 0) log.info("Processing index {}", index);
         var io = context.getBean(IOService.class);
         if (io.exists(blockNumber)) return true;
         var client = context.getBean(EthClientService.class);
         for (var i = 0; i < 5; i++) {
             try {
-                var block = client.getBlock(blockNumber, true);
-                if (index % 1000 == 0) log.info("Block {} from {}",
-                        block.getNumber().longValue(), new Date(block.getTimestamp().longValue() * 1000));
-                io.save(block);
+                //var block = client.getBlock(blockNumber, true);
+                /*if (index % 1000 == 0) log.info("Block {} from {}",
+                        block.getNumber().longValue(), new Date(block.getTimestamp().longValue() * 1000));*/
+                //io.save(block);
                 return true;
             } catch (Throwable t) {
                 if (i < 4) Thread.sleep(10000L);
